@@ -9,30 +9,30 @@ export class AppController {
   constructor(private readonly appService: AppService) { }
 
   @Get()
-  getProducts(): Product[] {
-    return this.appService.getProducts();
+  async getProducts(): Promise<Product[]> {
+    return await this.appService.getProducts();
   }
 
   @Get(':id')
-  getProductById(@Param('id') id: string): Product {
-    return this.appService.getProductById(id)
+  async getProductById(@Param('id') id: string): Promise<Product> {
+    return await this.appService.getProductById(id)
   }
 
   @UseGuards(AuthGuard)
   @Post()
-  createProduct(@Body() product: ProductDTO): Product {
-    return this.appService.createProduct(product)
+  async createProduct(@Body() product: ProductDTO): Promise<Product> {
+    return await this.appService.createProduct(product)
   }
 
   @UseGuards(AuthGuard)
   @Put(':id')
-  updateProduct(@Param('id') id: string, @Body() product: ProductDTO) {
-    return this.appService.updateProduct(id, product)
+  async updateProduct(@Param('id') id: string, @Body() product: ProductDTO): Promise<Product> {
+    return await this.appService.updateProduct(id, product)
   }
 
   @UseGuards(AuthGuard)
   @Delete(':id')
-  deleteProduct(@Param('id') id: string) {
-    return this.appService.deleteProduct(id);
+  async deleteProduct(@Param('id') id: string) {
+    return await this.appService.deleteProduct(id);
   }
 }

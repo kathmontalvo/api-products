@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Product } from './products/entities/product.entity';
 import { ProductDTO } from './products/DTOs/product.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AppService {
@@ -44,6 +46,11 @@ export class AppService {
 
   ];
 
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>
+  ) { }
+
   /** CRUD operations:
    * - Create: POST
    * - Read: GET
@@ -53,13 +60,13 @@ export class AppService {
 
 
   // GET method: list items
-  getProducts(): Product[] {
-    return this.db;
+  async getProducts(): Promise<Product[]> {
+    return await this.productRepository.find()
   }
 
-  getProductById(id: string): Product {
+  async getProductById(id: string): Promise<Product> {
 
-    const product = this.db.find(p => p.id == id);
+    const product = await this.productRepository.findOne({ where: { id } });
 
     if (!product) {
       throw new NotFoundException(`The product with id ${id} was not found.`)
@@ -70,39 +77,28 @@ export class AppService {
 
   // POST method: create item
 
-  createProduct(product: ProductDTO): Product {
-    const newProduct: Product = {
-      id: Math.random().toString(),
-      name: product.name,
-      price: product.price,
-      inStock: product.inStock,
-      creationDate: new Date()
-    }
+  async createProduct(product: ProductDTO): Promise<Product> {
 
-    this.db.push(newProduct);
-    return newProduct;
+    const newProduct = await this.productRepository.create(product)
+    return await this.productRepository.save(newProduct);
   }
 
   // PUT method: update item
 
-  updateProduct(id: string, updatedProduct: ProductDTO) {
-    const previousProduct = this.getProductById(id);
-    const indexProduct = this.db.findIndex(p => p.id == id);
+  async updateProduct(id: string, updatedProduct: ProductDTO): Promise<Product> {
+    const previousProduct = await this.getProductById(id);
 
-    this.db[indexProduct] = {
-      ...previousProduct,
-      ...updatedProduct
-    }
+    const finalProduct = this.productRepository.merge(previousProduct, updatedProduct)
 
-    return this.db[indexProduct];
+    return await this.productRepository.save(finalProduct);
   }
 
   // DELETE method: delete item
-  deleteProduct(id: string) {
-    const previousProduct = this.getProductById(id);
-    this.db = this.db.filter(p => p.id !== id);
+  async deleteProduct(id: string) {
+    const previousProduct = await this.getProductById(id);
+    await this.productRepository.remove(previousProduct);
 
-    return this.getProducts();
+    return await this.getProducts();
   }
 
 
